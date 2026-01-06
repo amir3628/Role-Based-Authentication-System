@@ -17,6 +17,8 @@ interface AuthContextType {
   loginOverride: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (token: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
   isAdmin: boolean;
 }
 
@@ -70,6 +72,37 @@ const mockSignup = async (email: string, password: string): Promise<{ success: b
       name: email.split('@')[0],
     },
   };
+};
+
+const mockRequestPasswordReset = async (email: string): Promise<{ success: boolean; error?: string }> => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  if (!email) {
+    return { success: false, error: 'Email is required' };
+  }
+
+  // Simulate email not found (10% chance for demo)
+  if (Math.random() < 0.1) {
+    return { success: false, error: 'No account found with this email address' };
+  }
+
+  // In real implementation, this would send an email with a reset link
+  return { success: true };
+};
+
+const mockResetPassword = async (token: string, newPassword: string): Promise<{ success: boolean; error?: string }> => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  if (!token || !newPassword) {
+    return { success: false, error: 'Invalid reset request' };
+  }
+
+  // Simulate invalid/expired token (10% chance for demo)
+  if (Math.random() < 0.1) {
+    return { success: false, error: 'Reset link has expired. Please request a new one.' };
+  }
+
+  return { success: true };
 };
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -129,6 +162,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }, []);
 
+  const requestPasswordReset = useCallback(async (email: string) => {
+    setIsLoading(true);
+    try {
+      return await mockRequestPasswordReset(email);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const resetPassword = useCallback(async (token: string, newPassword: string) => {
+    setIsLoading(true);
+    try {
+      return await mockResetPassword(token, newPassword);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -139,6 +190,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         loginOverride,
         signup,
         logout,
+        requestPasswordReset,
+        resetPassword,
         isAdmin: user?.role === 'admin',
       }}
     >

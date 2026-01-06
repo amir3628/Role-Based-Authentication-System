@@ -16,9 +16,10 @@ const loginSchema = z.object({
 
 interface LoginFormProps {
   onSwitchToSignup: () => void;
+  onForgotPassword: () => void;
 }
 
-export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
+export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup, onForgotPassword }) => {
   const { login, loginOverride, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -138,6 +139,17 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
               {errors.password && (
                 <p className="text-sm text-destructive">{errors.password}</p>
               )}
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={onForgotPassword}
+                className="text-sm text-primary hover:underline font-medium"
+                disabled={isLoading}
+              >
+                Forgot password?
+              </button>
             </div>
 
             <Button
