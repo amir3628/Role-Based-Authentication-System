@@ -15,6 +15,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; sessionConflict?: boolean; error?: string }>;
   loginOverride: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   isAdmin: boolean;
 }
@@ -47,6 +48,30 @@ const mockLogin = async (email: string, password: string, override = false): Pro
   };
 };
 
+const mockSignup = async (email: string, password: string): Promise<{ success: boolean; user?: User; error?: string }> => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  if (!email || !password) {
+    return { success: false, error: 'Email and password are required' };
+  }
+
+  // Simulate email already exists (20% chance for demo)
+  if (Math.random() < 0.2) {
+    return { success: false, error: 'An account with this email already exists' };
+  }
+
+  const isAdmin = email.includes('admin');
+  return {
+    success: true,
+    user: {
+      id: crypto.randomUUID(),
+      email,
+      role: isAdmin ? 'admin' : 'user',
+      name: email.split('@')[0],
+    },
+  };
+};
+
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +82,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const result = await mockLogin(email, password);
       if (result.success && result.user) {
         setUser(result.user);
-        // In production, JWT would be stored in HttpOnly cookie by the server
         localStorage.setItem('auth_token', 'mock_jwt_token');
       }
       return result;
@@ -70,6 +94,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     try {
       const result = await mockLogin(email, password, true);
+      if (result.success && result.user) {
+        setUser(result.user);
+        localStorage.setItem('auth_token', 'mock_jwt_token');
+      }
+      return result;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const signup = useCallback(async (email: string, password: string) => {
+    setIsLoading(true);
+    try {
+      const result = await mockSignup(email, password);
       if (result.success && result.user) {
         setUser(result.user);
         localStorage.setItem('auth_token', 'mock_jwt_token');
@@ -99,6 +137,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isLoading,
         login,
         loginOverride,
+        signup,
         logout,
         isAdmin: user?.role === 'admin',
       }}
