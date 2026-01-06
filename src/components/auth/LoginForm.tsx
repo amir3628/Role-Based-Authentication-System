@@ -7,8 +7,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { SessionConflictModal } from './SessionConflictModal';
 import { toast } from 'sonner';
 import { Mail, Lock, LogIn, Shield } from 'lucide-react';
+import { z } from 'zod';
 
-export const LoginForm = () => {
+const loginSchema = z.object({
+  email: z.string().trim().email({ message: 'Please enter a valid email address' }).max(255),
+  password: z.string().min(6, { message: 'Password must be at least 6 characters' }).max(100),
+});
+
+interface LoginFormProps {
+  onSwitchToSignup: () => void;
+}
+
+export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToSignup }) => {
   const { login, loginOverride, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,22 +26,21 @@ export const LoginForm = () => {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string } = {};
+    const result = loginSchema.safeParse({ email, password });
     
-    if (!email) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
+    if (!result.success) {
+      const fieldErrors: { email?: string; password?: string } = {};
+      result.error.errors.forEach((err) => {
+        if (err.path[0]) {
+          fieldErrors[err.path[0] as keyof typeof fieldErrors] = err.message;
+        }
+      });
+      setErrors(fieldErrors);
+      return false;
     }
     
-    if (!password) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setErrors({});
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -151,7 +160,17 @@ export const LoginForm = () => {
           </form>
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
-            <p>Demo: Use any email with "admin" to login as admin</p>
+            <p>
+              Don't have an account?{' '}
+              <button
+                type="button"
+                onClick={onSwitchToSignup}
+                className="text-primary hover:underline font-medium"
+                disabled={isLoading}
+              >
+                Sign up
+              </button>
+            </p>
           </div>
         </CardContent>
       </Card>
