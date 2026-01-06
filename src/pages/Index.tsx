@@ -1,11 +1,14 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useAuth } from '@/contexts/AuthContext';
+import { LoginForm } from '@/components/auth/LoginForm';
+import { Dashboard } from '@/components/auth/Dashboard';
 
 const Index = () => {
+  const { isAuthenticated } = useAuth();
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center p-4">
+      <div className="w-full">
+        {isAuthenticated ? <Dashboard /> : <LoginForm />}
       </div>
     </div>
   );
